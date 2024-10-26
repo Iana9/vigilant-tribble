@@ -1,1 +1,1 @@
-# vigilant-tribble
+# C++ programmer course
