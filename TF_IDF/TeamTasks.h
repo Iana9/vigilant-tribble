@@ -17,18 +17,15 @@ public:
     };
     using TasksInfo = std::map<TaskStatus, int>;
     std::map<std::string, TasksInfo> PersonTasks;
-    // �������� ���������� �� �������� ����� ����������� ������������
+
     const TasksInfo& GetPersonTasksInfo(const std::string& person) const {
         return PersonTasks.at(person);
     }
 
-    // �������� ����� ������ (� ������� NEW) ��� ����������� �������������
     void AddNewTask(const std::string& person) {
         ++PersonTasks[person][TaskStatus::NEW];
     }
 
-    // �������� ������� �� ������� ���������� ����� ����������� ������������,
-    // ����������� ��. ����
     std::pair<TasksInfo, TasksInfo> PerformPersonTasks(const std::string& person, int task_count) {
         std::pair<TasksInfo, TasksInfo> taskdiff;
         for (TaskStatus t = TaskStatus::NEW; t != TaskStatus::DONE && task_count > 0; t = static_cast<TaskStatus>(static_cast<int>(t) + 1)) {
