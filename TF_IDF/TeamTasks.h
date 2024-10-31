@@ -50,4 +50,4 @@ public:
             ", " << tasks_info[TaskStatus::DONE] << " tasks are done" << std::endl;
     }
 };
-#endif TEAMTASKS_H
+#endif // TEAMTASKS_H

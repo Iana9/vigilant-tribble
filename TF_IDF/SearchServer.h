@@ -11,16 +11,34 @@
 #ifndef SEARCH_SERVER_H
 #define SEARCH_SERVER_H
 
+enum class DocumentStatus
+{
+    ACTUAL,
+    IRRELEVANT,
+    BANNED,
+    REMOVED
+};
+
 class SearchServer
 {
 public:
-    enum class DocumentStatus
-    {
-        ACTUAL,
-        IRRELEVANT,
-        BANNED,
-        REMOVED
-    };
+    SearchServer() = default;
+
+    template <typename Container>
+    SearchServer(const Container& stop_words) {
+        static_assert(std::is_same<typename Container::value_type, 
+        std::string>::value,
+        "Container must contain strings");
+        for (const std::string& word : stop_words) {
+            stop_words_.insert(word);
+        }
+    }
+
+    SearchServer(const std::string& text) 
+    : SearchServer(SplitIntoWords(text)) 
+    { 
+    }
+
 private:
     struct Document
     {
@@ -28,6 +46,12 @@ private:
         DocumentStatus status;
         int rating;
         double relevance;
+
+        Document (const int id, const DocumentStatus status, const int rating, const double relevance) 
+        : id(id), status(status), rating(rating), relevance(relevance) {
+        }
+
+        Document () : id(0), status(DocumentStatus::IRRELEVANT), rating(0), relevance(0) {}
     };
 
     struct DocumentData {
@@ -50,7 +74,7 @@ private:
     std::map<int, DocumentData> documents_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
     std::vector<Document> matched_documents_;
-    std::set<std::string> stop_words_;
+    std::set<std::string> stop_words_ = {};
     Query query_;
     int document_count_ = 0;
 
@@ -164,12 +188,6 @@ public:
         documents_.insert({ document_id, { ComputeAverageRating(ratings), status } });
         for (const std::string& word : words) {
             word_to_document_freqs_[word][document_id] += inv_word_count;
-        }
-    }
-
-    void SetStopWords(const std::string& text) {
-        for (const std::string& word : SplitIntoWords(text)) {
-            stop_words_.insert(word);
         }
     }
 
