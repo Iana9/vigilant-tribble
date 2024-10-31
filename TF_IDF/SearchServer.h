@@ -7,6 +7,7 @@
 #include <random>
 #include <cmath>
 #include <numeric>
+#include <sstream>
 
 #ifndef SEARCH_SERVER_H
 #define SEARCH_SERVER_H
@@ -81,18 +82,8 @@ private:
     std::vector<std::string> SplitIntoWords(const std::string& text) const {
         std::vector<std::string> words;
         std::string word;
-        for (const char c : text) {
-            if (c == ' ') {
-                if (!word.empty()) {
-                    words.push_back(word);
-                    word.clear();
-                }
-            }
-            else {
-                word += c;
-            }
-        }
-        if (!word.empty()) {
+        std::istringstream iss(text);
+        while (iss >> word) {
             words.push_back(word);
         }
         return words;
