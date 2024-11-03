@@ -8,6 +8,7 @@
 #include <cmath>
 #include <numeric>
 #include <sstream>
+#include <optional>
 
 #ifndef SEARCH_SERVER_H
 #define SEARCH_SERVER_H
@@ -23,10 +24,10 @@ enum class DocumentStatus
 class SearchServer
 {
 public:
-    SearchServer() = default;
+    explicit SearchServer() = default;
 
     template <typename Container>
-    SearchServer(const Container& stop_words) {
+    explicit SearchServer(const Container& stop_words) {
         static_assert(std::is_same<typename Container::value_type, 
         std::string>::value,
         "Container must contain strings");
@@ -35,7 +36,7 @@ public:
         }
     }
 
-    SearchServer(const std::string& text) 
+    explicit SearchServer(const std::string& text) 
     : SearchServer(SplitIntoWords(text)) 
     { 
     }
@@ -99,17 +100,24 @@ private:
         return words;
     }
 
-    void ParseQuery(const std::string& text) {
+    bool ParseQuery(const std::string& text) {
+        if (text.empty()) {
+            return false;
+        }
         query_.query_words_negative.clear();
         query_.query_words_positive.clear();
         for (const std::string& word : SplitIntoWordsNoStop(text)) {
             if (word.at(0) == '-') {
+                if (word.substr(1).empty() | word.substr(1)[0] == '-') {
+                    return false;
+                }
                 query_.query_words_negative.insert(word.substr(1));
             }
             else {
                 query_.query_words_positive.insert(word);
             }
         }
+        return true;
     }
 
     double idf(const std::string& word) const {
@@ -170,8 +178,13 @@ public:
         return {std::get<0>(IDFPositiveWords(document_id)), documents_[document_id].status};
     };
 
-    void AddDocument(const int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings) {
+    [[nodiscard]] bool AddDocument(const int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings) {
         ++document_count_;
+
+        if ((document_id < 0) || (documents_.count(document_id) > 0)) {
+            return false;
+        }
+
         const std::vector<std::string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size();
         const std::set<std::string> uniq_words(words.begin(), words.end());
@@ -180,15 +193,19 @@ public:
         for (const std::string& word : words) {
             word_to_document_freqs_[word][document_id] += inv_word_count;
         }
+        return true;
     }
 
-    std::vector<Document> FindTopDocuments(const std::string& raw_query, const DocumentStatus& status) {
+    std::optional<std::vector<Document>> FindTopDocuments(const std::string& raw_query, const DocumentStatus& status) {
         return FindTopDocuments(raw_query, [status](int document_id, DocumentStatus st, int rating) { return st == status; });
     }
 
     template <typename Key_mapper = DefaultKeyMapper>
-    std::vector<Document> FindTopDocuments(const std::string& raw_query, const Key_mapper key_mapper = DefaultKeyMapper()) {
-        ParseQuery(raw_query);
+    std::optional<std::vector<Document>> FindTopDocuments(const std::string& raw_query, const Key_mapper key_mapper = DefaultKeyMapper()) {
+        bool result = ParseQuery(raw_query);
+        if (!result) {
+            return std::nullopt;
+        }
         FindAllDocuments();
         std::sort(matched_documents_.begin(), matched_documents_.end(), [](const Document& lhs, const Document& rhs) { 
             return (lhs.relevance > rhs.relevance) ||
