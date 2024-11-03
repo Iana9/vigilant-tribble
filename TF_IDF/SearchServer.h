@@ -100,13 +100,26 @@ private:
         return words;
     }
 
+    [[nodiscard]] static bool IsNotValidWord(const std::vector<std::string>& words) {
+        return std::count_if(words.begin(), words.end(), [](std::string word) {
+            return std::any_of(word.begin(), word.end(), [](char c) {
+                return c < 32;
+            }); }) > 0;
+    }
+
     bool ParseQuery(const std::string& text) {
         if (text.empty()) {
             return false;
         }
+        std::vector<std::string> words = SplitIntoWordsNoStop(text);
+
+        if (IsNotValidWord(words)) {
+            return false;
+        }
+
         query_.query_words_negative.clear();
         query_.query_words_positive.clear();
-        for (const std::string& word : SplitIntoWordsNoStop(text)) {
+        for (const std::string& word : words) {
             if (word.at(0) == '-') {
                 if (word.substr(1).empty() | word.substr(1)[0] == '-') {
                     return false;
@@ -186,6 +199,11 @@ public:
         }
 
         const std::vector<std::string> words = SplitIntoWordsNoStop(document);
+
+        if (IsNotValidWord(words)) {
+            return false;
+        }
+
         const double inv_word_count = 1.0 / words.size();
         const std::set<std::string> uniq_words(words.begin(), words.end());
 
