@@ -103,7 +103,7 @@ private:
     [[nodiscard]] static bool IsNotValidWord(const std::vector<std::string>& words) {
         return std::count_if(words.begin(), words.end(), [](std::string word) {
             return std::any_of(word.begin(), word.end(), [](char c) {
-                return c < 32;
+                return c > 0 && c < 32;
             }); }) > 0;
     }
 
