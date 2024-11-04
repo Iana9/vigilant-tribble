@@ -9,6 +9,7 @@
 #include <numeric>
 #include <sstream>
 #include <optional>
+#include <stdexcept>
 
 #ifndef SEARCH_SERVER_H
 #define SEARCH_SERVER_H
@@ -31,6 +32,9 @@ public:
         static_assert(std::is_same<typename Container::value_type, 
         std::string>::value,
         "Container must contain strings");
+        if (IsNotValidWord(stop_words)) {
+            throw std::invalid_argument("Special symbols were used in stop-words");
+        }
         for (const std::string& word : stop_words) {
             stop_words_.insert(word);
         }
@@ -107,30 +111,34 @@ private:
             }); }) > 0;
     }
 
-    bool ParseQuery(const std::string& text) {
+    void ParseQuery(const std::string& text) {
         if (text.empty()) {
-            return false;
+            throw std::invalid_argument("Query is empty");
         }
         std::vector<std::string> words = SplitIntoWordsNoStop(text);
 
         if (IsNotValidWord(words)) {
-            return false;
+            throw std::invalid_argument("Query has banned symbols");
         }
 
         query_.query_words_negative.clear();
         query_.query_words_positive.clear();
         for (const std::string& word : words) {
             if (word.at(0) == '-') {
-                if (word.substr(1).empty() | word.substr(1)[0] == '-') {
-                    return false;
+                if (word.substr(1).empty()) {
+                    throw std::invalid_argument("There is nothing after excluding symbol");
                 }
+                else if (word.substr(1)[0] == '-')
+                {
+                    throw std::invalid_argument("There is double exclusion in query");
+                }
+                
                 query_.query_words_negative.insert(word.substr(1));
             }
             else {
                 query_.query_words_positive.insert(word);
             }
         }
-        return true;
     }
 
     double idf(const std::string& word) const {
@@ -186,44 +194,47 @@ public:
         return static_cast<int>(document_count_);
     };
 
+    DocumentData GetDocumentId(int index) const {
+        return documents_.at(index);
+    }
+
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, const int& document_id) {
         ParseQuery(raw_query);
         return {std::get<0>(IDFPositiveWords(document_id)), documents_[document_id].status};
     };
 
-    [[nodiscard]] bool AddDocument(const int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings) {
+    void AddDocument(const int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings) {
         ++document_count_;
-
-        if ((document_id < 0) || (documents_.count(document_id) > 0)) {
-            return false;
-        }
-
         const std::vector<std::string> words = SplitIntoWordsNoStop(document);
+        const double inv_word_count = 1.0 / words.size();
 
-        if (IsNotValidWord(words)) {
-            return false;
+        if (document_id < 0) 
+        {
+            throw std::invalid_argument("Document id consists of negative number");
+        }
+        else if (documents_.count(document_id) > 0)
+        {
+            throw std::invalid_argument("Document id is already in SearchServer");
+        }
+        else if (IsNotValidWord(words))
+        {
+            throw std::invalid_argument("Document consists of invalid words");
         }
 
-        const double inv_word_count = 1.0 / words.size();
         const std::set<std::string> uniq_words(words.begin(), words.end());
-
         documents_.insert({ document_id, { ComputeAverageRating(ratings), status } });
         for (const std::string& word : words) {
             word_to_document_freqs_[word][document_id] += inv_word_count;
         }
-        return true;
     }
 
-    std::optional<std::vector<Document>> FindTopDocuments(const std::string& raw_query, const DocumentStatus& status) {
+    std::vector<Document> FindTopDocuments(const std::string& raw_query, const DocumentStatus& status) {
         return FindTopDocuments(raw_query, [status](int document_id, DocumentStatus st, int rating) { return st == status; });
     }
 
     template <typename Key_mapper = DefaultKeyMapper>
-    std::optional<std::vector<Document>> FindTopDocuments(const std::string& raw_query, const Key_mapper key_mapper = DefaultKeyMapper()) {
-        bool result = ParseQuery(raw_query);
-        if (!result) {
-            return std::nullopt;
-        }
+    std::vector<Document> FindTopDocuments(const std::string& raw_query, const Key_mapper key_mapper = DefaultKeyMapper()) {
+        ParseQuery(raw_query);
         FindAllDocuments();
         std::sort(matched_documents_.begin(), matched_documents_.end(), [](const Document& lhs, const Document& rhs) { 
             return (lhs.relevance > rhs.relevance) ||

@@ -8,6 +8,9 @@ public:
 		Rational(int numerator = 0, int denominator = 1)
         : numerator_(numerator), denominator_(denominator)
          {
+        if (denominator_ == 0) {
+            throw invalid_argument("Devision by zero is banned"s);
+        }
         int d = gcd(abs(numerator), abs(denominator));
         numerator_ = numerator/d;
         denominator_ = denominator/d;
@@ -51,6 +54,9 @@ public:
     Rational operator/=(Rational right) {
         numerator_ *= right.denominator_;
         denominator_ *= right.numerator_;
+        if (denominator_ == 0) {
+            throw invalid_argument("Devision by zero is banned"s);
+        }
         int d = gcd(abs(numerator_), abs(denominator_));
         numerator_ = numerator_/d;
         denominator_ = denominator_/d;
@@ -142,6 +148,14 @@ Rational operator-(Rational left) {
     return {-left.Numerator(), left.Denominator()};
 }
 
+Rational operator*(Rational left, Rational right) {
+    return { left.Numerator() * right.Numerator(), left.Denominator() * right.Denominator()};
+}
+
+Rational operator/(Rational left, Rational right) {
+    return { left.Numerator() * right.Denominator(), left.Denominator() * right.Numerator()};
+}
+
 
 int main () {
 
@@ -167,6 +181,23 @@ int main () {
     cout << (sum == sum) << endl;
     cout << (sum >= sum) << endl;
     cout << (sum <= sum) << endl;
+
+
+    try {
+        const Rational three_fifth{3, 5};
+        const Rational zero;
+        cout << three_fifth << " / " << zero << " = " << (three_fifth / zero) << endl;
+    } catch (const invalid_argument& e) {
+        cout << "Ошибка: "s << e.what() << endl;
+    }
+    try {
+        Rational value{3, 5};
+        value /= Rational();
+				// Следующая строка не должна выполниться
+        cout << value << endl;
+    } catch (const invalid_argument& e) {
+        cout << "Ошибка: "s << e.what() << endl;
+    }
 
     return 0;
 }
