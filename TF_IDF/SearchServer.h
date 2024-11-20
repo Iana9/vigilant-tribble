@@ -45,7 +45,6 @@ public:
     { 
     }
 
-private:
     struct Document
     {
         int id;
@@ -60,6 +59,14 @@ private:
         Document () : id(0), status(DocumentStatus::IRRELEVANT), rating(0), relevance(0) {}
     };
 
+    friend std::ostream& operator<<(std::ostream& out, const Document& doc) {
+        out << "{ document_id = " << doc.id << ", ";
+        out << "relevance = " << doc.relevance << ", ";
+        out << "rating = " << doc.rating << " } ";
+        return out;
+    }
+    
+private:
     struct DocumentData {
         int rating;
         DocumentStatus status;
@@ -253,3 +260,79 @@ public:
 };
 
 #endif // SEARCH_SERVER_H
+
+template <typename _Iterator>
+class Page {
+    public:
+        Page(_Iterator first, _Iterator last) : _M_first(first), _M_last(last)  {  };
+
+        friend std::ostream& operator<<(std::ostream& out, const Page& page) {
+            for (_Iterator it = page._M_first; it != page._M_last; ++it) {
+                out << *it << " "; // Add space for better readability
+            }
+            return out;
+        }
+
+        _Iterator begin() const { return _M_first; }
+        _Iterator end() const { return _M_last; }
+
+    private:
+        _Iterator _M_first;
+        _Iterator _M_last;
+};
+
+
+template <typename _Iterator>
+class Paginator {
+public:
+    typedef _Iterator					                iterator_type;
+    using traits_type = std::iterator_traits<iterator_type>;
+    using iterator_category = typename traits_type::iterator_category;
+    using value_type = typename traits_type::value_type;
+    using difference_type = typename traits_type::difference_type;
+    using reference = typename traits_type::reference;
+    using pointer = typename traits_type::pointer;
+
+    explicit Paginator(_Iterator first, _Iterator last, int page_size = 1) 
+    {
+        for (auto& it = first; it != last; ) {
+            auto next = it;
+            std::advance(next, page_size);
+            if (next > last) {
+                next = last;
+            }
+            _M_pages.emplace_back(it, next);
+            it = next;
+        }
+     }
+
+    auto begin() const {
+        return _M_pages.begin();
+    }
+    auto end() const {
+        return _M_pages.end();
+    }
+    size_t size() const {
+        return _M_pages.size();
+    }
+
+    Page<iterator_type>& operator->() const {
+        return _M_pages.at(_M_current_page);
+    }
+
+    Paginator&
+    operator++()
+    {
+    ++_M_current_page;
+    return *this;
+    }
+    
+    Paginator&
+    operator++(int)
+    { return Paginator(_M_current_page++); }
+
+private:
+    int _M_page_size;
+    int _M_current_page = 0;
+    std::vector<Page<iterator_type>> _M_pages;
+};
