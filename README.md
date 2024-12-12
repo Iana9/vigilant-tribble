@@ -1,1 +1,1 @@
-# C++ programmer course
+# C++ pet projects
