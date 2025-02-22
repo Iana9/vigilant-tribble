@@ -1,7 +1,4 @@
-#include <unordered_map>
-#include <vector>
-#include <iostream>
-#include <unordered_map>
+#include "histogram.h"
 
 
 template<typename T, typename Collection>
@@ -15,17 +12,4 @@ std::unordered_map<T, int> histogram(Collection& collection) {
         }
     }
     return hist_map;
-}
-
-int main() {
-    
-    std::vector<int> numbers = {1, 2, 3, 2, 3, 4, 5, 4, 5, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6};
-
-    std::unordered_map<int, int> hist = histogram<int>(numbers);
-
-    for (auto element : hist) {
-        std::cout << element.first << ": " << element.second << std::endl;
-    }
-
-    return 0;
 }
