@@ -1,7 +1,6 @@
 #ifndef HISTOGRAM_H
 #define HISTOGRAM_H
 
-#include <unordered_map>
 #include <vector>
 #include <iostream>
 #include <unordered_map>
