@@ -8,16 +8,35 @@ class node {
         node(int v) : value(v), left(nullptr), right(nullptr) {}
 };
 
-void dfs(node& n) {
+void dfs_PreOrderTraversal(node& n) {
     std::cout << n.value << " ";
     if (n.left != nullptr) {
-        dfs(*n.left);
+        dfs_PreOrderTraversal(*n.left);
     }
     if (n.right!= nullptr) {
-        dfs(*n.right);
+        dfs_PreOrderTraversal(*n.right);
     }
 };
 
+void dfs_InorderTraversal(node& n) {
+    if (n.left != nullptr) {
+        dfs_InorderTraversal(*n.left);
+    }
+    std::cout << n.value << " ";
+    if (n.right!= nullptr) {
+        dfs_InorderTraversal(*n.right);
+    }
+};
+
+void dfs_PostorderTraversal(node& n) {
+    if (n.left != nullptr) {
+        dfs_PostorderTraversal(*n.left);
+    }
+    if (n.right!= nullptr) {
+        dfs_PostorderTraversal(*n.right);
+    }
+    std::cout << n.value << " ";
+};
 
 int main() 
 {
@@ -43,7 +62,13 @@ int main()
     n4.left = &n8;
     n4.right = &n9;
 
-    dfs(n1);
+    dfs_PreOrderTraversal(n1);
+    std::cout << std::endl;
+
+    dfs_InorderTraversal(n1);
+    std::cout << std::endl;
+
+    dfs_PostorderTraversal(n1);
 
     return 0;
 }
