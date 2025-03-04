@@ -1,42 +1,53 @@
-#include <iostream>
 
-class node {
-    public:
-        int value;
-        node* left;
-        node* right;
-        node(int v) : value(v), left(nullptr), right(nullptr) {}
-};
+#include "DFS.h"
 
-void dfs_PreOrderTraversal(node& n) {
+void DFS::PreOrderTraversal(node& n) 
+{
     std::cout << n.value << " ";
     if (n.left != nullptr) {
-        dfs_PreOrderTraversal(*n.left);
+        PreOrderTraversal(*n.left);
     }
     if (n.right!= nullptr) {
-        dfs_PreOrderTraversal(*n.right);
+        PreOrderTraversal(*n.right);
     }
-};
-
-void dfs_InorderTraversal(node& n) {
+}
+void DFS::InorderTraversal(node& n) 
+{
     if (n.left != nullptr) {
-        dfs_InorderTraversal(*n.left);
+        InorderTraversal(*n.left);
     }
     std::cout << n.value << " ";
     if (n.right!= nullptr) {
-        dfs_InorderTraversal(*n.right);
+        InorderTraversal(*n.right);
     }
-};
-
-void dfs_PostorderTraversal(node& n) {
+}
+void DFS::PostorderTraversal(node& n)
+{
     if (n.left != nullptr) {
-        dfs_PostorderTraversal(*n.left);
+        PostorderTraversal(*n.left);
     }
     if (n.right!= nullptr) {
-        dfs_PostorderTraversal(*n.right);
+        PostorderTraversal(*n.right);
     }
     std::cout << n.value << " ";
-};
+}
+
+void DFS::Traversal(node& n, Type type) 
+{
+    switch (type) {
+        case Type::PRE_ORDER:
+            PreOrderTraversal(n);
+            break;
+        case Type::IN_ORDER:
+            InorderTraversal(n);
+            break;
+        case Type::POST_ORDER:
+            PostorderTraversal(n);
+            break;
+    }
+}
+
+
 
 int main() 
 {
@@ -62,13 +73,19 @@ int main()
     n4.left = &n8;
     n4.right = &n9;
 
-    dfs_PreOrderTraversal(n1);
+    DFS dfs;
+
+    dfs.Traversal(n1, Type::PRE_ORDER);
     std::cout << std::endl;
 
-    dfs_InorderTraversal(n1);
+    dfs.Traversal(n1, Type::IN_ORDER);
     std::cout << std::endl;
 
-    dfs_PostorderTraversal(n1);
+    dfs.Traversal(n1, Type::POST_ORDER);
+    std::cout << std::endl;
+
+    node* res = dfs.Search<int>(n1, 6, Type::IN_ORDER);
+    std::cout << res->value;
 
     return 0;
 }
