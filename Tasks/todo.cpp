@@ -39,3 +39,36 @@ int TodoList::getTaskCount() const {
     int count = static_cast<int>(tasks_.size());
     return count;
 }
+
+void TodoList::readHistory() {
+    const char* history = "todo_list_history.json";
+    using json = nlohmann::json;
+    std::ifstream infile(history);
+    json data = json::parse(infile);
+    for (auto& task : data) {
+        Task tsk(task["description"], task["completed"]);
+        tsk.setCompleted(task["completed"]);
+        tsk.setDegreeOfImportance(task["degreeOfImportance"]);
+        tsk.setCreateDate(task["createDate"]);
+        this->tasks_.push_back(tsk);
+    }
+}
+
+void TodoList::saveTasks() {
+    using json = nlohmann::json;
+    json j;
+    json tmp_json;
+    std::ofstream outfile("todo_list_history.json", std::ios::app);
+    for (int i = 0; i < tasks_.size(); i++) {
+        Task& task = tasks_[i];
+        tmp_json = {
+            {"description", task.getDescription()},
+            {"completed", task.isCompleted()},
+            {"degreeOfImportance", task.getDegreeOfImportance()},
+            {"createDate", task.getCreateDate()}
+        };
+        j[fmt::format("{}", i)] = tmp_json;
+    }
+    outfile << j;
+    outfile.close();
+}

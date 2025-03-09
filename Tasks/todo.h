@@ -5,6 +5,9 @@
 #include <vector>
 #include <iostream>
 #include <ctime>
+#include <nlohmann/json.hpp>
+#include <fmt/core.h>
+#include <fstream>
 
 class createDate {
 public:
@@ -38,7 +41,7 @@ public:
     DegreeOfImportance getDegreeOfImportance() const { return degreeOfImportance_; }
     void setDegreeOfImportance(DegreeOfImportance degree) { degreeOfImportance_ = degree; }
     std::string getCreateDate() const { return createDate_; }
-
+    void setCreateDate(std::string createDate) { createDate_ = createDate; }
 private:
     std::string description_;
     bool completed_;
@@ -54,7 +57,8 @@ public:
     void setDegreeOfImportance(int index, DegreeOfImportance degree);
     std::vector<Task> getTasks() const;
     int getTaskCount() const;
-
+    void saveTasks();
+    void readHistory();
 private:
     std::vector<Task> tasks_;
 };

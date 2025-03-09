@@ -73,14 +73,32 @@ void handle_DecreasePriority(TodoList& todoList) {
     }
 }
 
-void handle_Exit() {
-    // todoList.saveTasks();
+void handle_Exit(TodoList& todoList) {
+    todoList.saveTasks();
     Display::print_exit("Exiting...");
+}
+
+bool file_exists(const std::string& filename) {
+    std::ifstream file(filename);
+    return file.good();
+}
+
+void handle_History(TodoList& todoList) {
+    const char* history = "todo_list_history.json";
+    if (file_exists(history)) {
+        std::string choice;
+        Display::greet_enter("There exists the previous session of tasks. Do you want to load them? Enter y/n");
+        std::cin >> choice;
+        if (choice == "y" || choice == "Y") {
+            todoList.readHistory();
+        }
+    }
 }
 
 int main() {
     TodoList todoList;
     int choice;
+    handle_History(todoList);
 
     while (true) {
         choice = getChoice();
@@ -111,7 +129,7 @@ int main() {
                 break;
             }
             case MenuOption::EXIT: {
-                handle_Exit();
+                handle_Exit(todoList);
                 return 0;
             }
         }
